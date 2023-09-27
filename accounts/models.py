@@ -10,7 +10,12 @@ class Customer(models.Model):
     #a function that allows you to see the name of the customer in the admin site
     def __str__(self):
         return self.name
-    
+
+class Tag(models.Model):
+    name = models.CharField(max_length=200, null=True)
+
+    def __str__(self):
+        return self.name  
 
 class Product(models.Model):
     CATEGORY = (
@@ -24,6 +29,10 @@ class Product(models.Model):
     description = models.CharField(max_length=200, null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
+    tags = models.ManyToManyField(Tag)
+
+    def __str__(self):
+        return self.name
 
 class Order(models.Model):
     # a variable that allows us to create a dropdown menu with choices in the model below
@@ -33,9 +42,10 @@ class Order(models.Model):
         ('Delivered', 'Delivered'),
     )
 
-    #customer = 
-    #product = 
+    customer = models.ForeignKey(Customer, null=True, on_delete=models.SET_NULL)
+    product = models.ForeignKey(Product, null=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     status = models.CharField(max_length=200, null=True, choices=STATUS)
+    
     
