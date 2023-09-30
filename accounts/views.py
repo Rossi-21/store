@@ -1,8 +1,32 @@
 from django.shortcuts import render, redirect
 from .models import *
-from .forms import OrderForm
+from .forms import OrderForm, CreateUserForm
+from .filters import OrderFilter
+from django.contrib.auth.forms import UserCreationForm
+
+def registerPage(request):
+
+    form = CreateUserForm()
+
+    if request.method == 'POST':
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            form.save()
+
+    context = {
+        'form' : form,
+    }
+
+    return render(request, 'accounts/register.html', context)
+
+def loginPage(request):
+    context = {
+
+    }
+    return render(request, 'accounts/login.html', context)
 
 def home(request):
+
     orders = Order.objects.all()
     customers = Customer.objects.all()
     total_customers = customers.count()
@@ -23,19 +47,25 @@ def home(request):
     return render(request, 'accounts/dashboard.html', context)
 
 def products(request):
+
     products = Product.objects.all()
 
     return render(request, 'accounts/products.html', {'products':products})
 
 def customer(request, id):
+
     customer = Customer.objects.get(id=id)
     orders = customer.order_set.all()
     orders_count = orders.count()
-   
+    
+    myFilter = OrderFilter(request.GET, queryset=orders)
+    orders = myFilter.qs
+
     context = {
         'customer' : customer,
         'orders' : orders,
         'orders_count' : orders_count,
+        'myFilter' : myFilter,
     }
 
     return render(request, 'accounts/customer.html', context)
