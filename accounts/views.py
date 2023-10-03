@@ -1,12 +1,14 @@
 from django.shortcuts import render, redirect
-from django.views import View
+
 from .models import *
+from .decorators import *
 from .forms import OrderForm, CreateUserForm
 from .filters import OrderFilter
-from django.contrib.auth.forms import UserCreationForm
+
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import Group
 from django.contrib import messages
-from .decorators import *
+
 
 
 def registerPage(request):
@@ -16,9 +18,14 @@ def registerPage(request):
     if request.method == 'POST':
         form = CreateUserForm(request.POST)
         if form.is_valid():
-            form.save()
-            user = form.cleaned_data.get('username')
-            messages.success(request, 'Account wasd created for ' + user)
+            user = form.save()
+            username = form.cleaned_data.get('username')
+
+            group = Group.objects.get(name='customer')
+            user.groups.add(group)
+
+            messages.success(request, 'Account wasd created for ' + username)
+
             return redirect('login')
 
     context = {
