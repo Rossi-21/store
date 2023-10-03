@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect
+from django.views import View
 from .models import *
 from .forms import OrderForm, CreateUserForm
 from .filters import OrderFilter
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 def registerPage(request):
@@ -36,56 +38,62 @@ def loginPage(request):
         if user is not None:
             login(request, user)
             return redirect('home')
+        else:
+            messages.info(request, 'Username or Password is incorrect')
 
-    context = {
-
-    }
+    context = {}
+    
     return render(request, 'accounts/login.html', context)
 
-def home(request):
+def logoutUser(request):
+    logout(request)
+    return redirect('login')
 
-    orders = Order.objects.all()
-    customers = Customer.objects.all()
-    total_customers = customers.count()
-    total_orders = orders.count()
-    delivered = orders.filter(status='Delivered').count()
-    pending = orders.filter(status='Pending').count()
+class loginRequiredViews(LoginRequiredMixin, View):
+    def home(request):
 
-    context = {
-        'orders' : orders,
-        'customers' : customers,
-        'total_customers' : total_customers,
-        'total_orders' : total_orders,
-        'delivered' : delivered,
-        'pending' : pending,
+        orders = Order.objects.all()
+        customers = Customer.objects.all()
+        total_customers = customers.count()
+        total_orders = orders.count()
+        delivered = orders.filter(status='Delivered').count()
+        pending = orders.filter(status='Pending').count()
+
+        context = {
+            'orders' : orders,
+            'customers' : customers,
+            'total_customers' : total_customers,
+            'total_orders' : total_orders,
+            'delivered' : delivered,
+            'pending' : pending,
+            
+        }
+
+        return render(request, 'accounts/dashboard.html', context)
+
+    def products(request):
+
+        products = Product.objects.all()
+
+        return render(request, 'accounts/products.html', {'products':products})
+
+    def customer(request, id):
+
+        customer = Customer.objects.get(id=id)
+        orders = customer.order_set.all()
+        orders_count = orders.count()
         
-    }
+        myFilter = OrderFilter(request.GET, queryset=orders)
+        orders = myFilter.qs
 
-    return render(request, 'accounts/dashboard.html', context)
+        context = {
+            'customer' : customer,
+            'orders' : orders,
+            'orders_count' : orders_count,
+            'myFilter' : myFilter,
+        }
 
-def products(request):
-
-    products = Product.objects.all()
-
-    return render(request, 'accounts/products.html', {'products':products})
-
-def customer(request, id):
-
-    customer = Customer.objects.get(id=id)
-    orders = customer.order_set.all()
-    orders_count = orders.count()
-    
-    myFilter = OrderFilter(request.GET, queryset=orders)
-    orders = myFilter.qs
-
-    context = {
-        'customer' : customer,
-        'orders' : orders,
-        'orders_count' : orders_count,
-        'myFilter' : myFilter,
-    }
-
-    return render(request, 'accounts/customer.html', context)
+        return render(request, 'accounts/customer.html', context)
 
 def createOrder(request):
     #call the form from form.py
