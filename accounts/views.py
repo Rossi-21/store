@@ -6,7 +6,7 @@ from .filters import OrderFilter
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from .decorators import *
 
 
 def registerPage(request):
@@ -49,8 +49,10 @@ def logoutUser(request):
     logout(request)
     return redirect('login')
 
-class loginRequiredViews(LoginRequiredMixin, View):
-    def home(request):
+
+@allowed_users(allowed_roles=['admin'])
+def home(request):
+    if request.user.is_authenticated:
 
         orders = Order.objects.all()
         customers = Customer.objects.all()
@@ -70,14 +72,23 @@ class loginRequiredViews(LoginRequiredMixin, View):
         }
 
         return render(request, 'accounts/dashboard.html', context)
+    
+    else:
 
-    def products(request):
+        return redirect('login')
+
+def products(request):
+    if request.user.is_authenticated:
 
         products = Product.objects.all()
 
         return render(request, 'accounts/products.html', {'products':products})
+    else:
+        return redirect('login')
+    
+def customer(request, id):
 
-    def customer(request, id):
+    if request.user.is_authenticated:
 
         customer = Customer.objects.get(id=id)
         orders = customer.order_set.all()
@@ -94,7 +105,9 @@ class loginRequiredViews(LoginRequiredMixin, View):
         }
 
         return render(request, 'accounts/customer.html', context)
-
+    else:
+        return redirect('login')
+    
 def createOrder(request):
     #call the form from form.py
     form = OrderForm()
