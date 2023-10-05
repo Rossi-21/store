@@ -10,7 +10,7 @@ from django.contrib.auth.models import Group
 from django.contrib import messages
 
 
-
+#git test commit
 def registerPage(request):
 
     form = CreateUserForm()
@@ -24,7 +24,7 @@ def registerPage(request):
             group = Group.objects.get(name='customer')
             user.groups.add(group)
 
-            messages.success(request, 'Account wasd created for ' + username)
+            messages.success(request, 'Account was created for ' + username)
 
             return redirect('login')
 
